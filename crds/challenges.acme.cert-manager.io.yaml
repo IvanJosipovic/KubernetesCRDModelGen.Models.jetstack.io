@@ -7,9 +7,10 @@ metadata:
     app: cert-manager
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: release-name
-    app.kubernetes.io/version: v1.18.2
+    app.kubernetes.io/component: crds
+    app.kubernetes.io/version: v1.19.0
     app.kubernetes.io/managed-by: Helm
-    helm.sh/chart: cert-manager-v1.18.2
+    helm.sh/chart: cert-manager-v1.19.0
   name: challenges.acme.cert-manager.io
 spec:
   group: acme.cert-manager.io
@@ -82,13 +83,15 @@ spec:
                   Challenge will be marked as failed.
                 properties:
                   group:
-                    description: Group of the resource being referred to.
+                    default: cert-manager.io
+                    description: Group of the issuer being referred to.
                     type: string
                   kind:
-                    description: Kind of the resource being referred to.
+                    default: Issuer
+                    description: Kind of the issuer being referred to.
                     type: string
                   name:
-                    description: Name of the resource being referred to.
+                    description: Name of the issuer being referred to.
                     type: string
                 required:
                 - name
@@ -407,6 +410,12 @@ spec:
                               enclosed in square brackets (e.g [2001:db8::1]) ; port is optional.
                               This field is required.
                             type: string
+                          protocol:
+                            description: Protocol to use for dynamic DNS update queries. Valid values are (case-sensitive) ``TCP`` and ``UDP``; ``UDP`` (default).
+                            enum:
+                            - TCP
+                            - UDP
+                            type: string
                           tsigAlgorithm:
                             description: |-
                               The TSIG Algorithm configured in the DNS supporting RFC2136. Used only
@@ -498,6 +507,7 @@ spec:
                                         items:
                                           type: string
                                         type: array
+                                        x-kubernetes-list-type: atomic
                                       name:
                                         description: Name of the ServiceAccount used to request a token.
                                         type: string
@@ -640,11 +650,9 @@ spec:
 
                                 The API object must be valid in the cluster; the Group and Kind must
                                 be registered in the cluster for this reference to be valid.
-                              type: object
-                              required:
-                              - name
                               properties:
                                 group:
+                                  default: gateway.networking.k8s.io
                                   description: |-
                                     Group is the group of the referent.
                                     When unspecified, "gateway.networking.k8s.io" is inferred.
@@ -652,11 +660,11 @@ spec:
                                     Group must be explicitly set to "" (empty string).
 
                                     Support: Core
-                                  type: string
-                                  default: gateway.networking.k8s.io
                                   maxLength: 253
                                   pattern: ^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                                  type: string
                                 kind:
+                                  default: Gateway
                                   description: |-
                                     Kind is kind of the referent.
 
@@ -666,19 +674,18 @@ spec:
                                     * Service (Mesh conformance profile, ClusterIP Services only)
 
                                     Support for other resources is Implementation-Specific.
-                                  type: string
-                                  default: Gateway
                                   maxLength: 63
                                   minLength: 1
                                   pattern: ^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$
+                                  type: string
                                 name:
                                   description: |-
                                     Name is the name of the referent.
 
                                     Support: Core
-                                  type: string
                                   maxLength: 253
                                   minLength: 1
+                                  type: string
                                 namespace:
                                   description: |-
                                     Namespace is the namespace of the referent. When unspecified, this refers
@@ -703,10 +710,10 @@ spec:
                                     </gateway:experimental:description>
 
                                     Support: Core
-                                  type: string
                                   maxLength: 63
                                   minLength: 1
                                   pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                                  type: string
                                 port:
                                   description: |-
                                     Port is the network port this Route targets. It can be interpreted
@@ -739,10 +746,10 @@ spec:
                                     the Route MUST be considered detached from the Gateway.
 
                                     Support: Extended
-                                  type: integer
                                   format: int32
                                   maximum: 65535
                                   minimum: 1
+                                  type: integer
                                 sectionName:
                                   description: |-
                                     SectionName is the name of a section within the target resource. In the
@@ -769,11 +776,15 @@ spec:
                                     Route MUST be considered detached from the Gateway.
 
                                     Support: Core
-                                  type: string
                                   maxLength: 253
                                   minLength: 1
                                   pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                                  type: string
+                              required:
+                              - name
+                              type: object
                             type: array
+                            x-kubernetes-list-type: atomic
                           podTemplate:
                             description: |-
                               Optional pod template used to configure the ACME challenge solver pods
@@ -824,26 +835,16 @@ spec:
                                               description: |-
                                                 An empty preferred scheduling term matches all objects with implicit weight 0
                                                 (i.e. it's a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).
-                                              type: object
-                                              required:
-                                              - preference
-                                              - weight
                                               properties:
                                                 preference:
                                                   description: A node selector term, associated with the corresponding weight.
-                                                  type: object
                                                   properties:
                                                     matchExpressions:
                                                       description: A list of node selector requirements by node's labels.
-                                                      type: array
                                                       items:
                                                         description: |-
                                                           A node selector requirement is a selector that contains values, a key, and an operator
                                                           that relates the key and values.
-                                                        type: object
-                                                        required:
-                                                        - key
-                                                        - operator
                                                         properties:
                                                           key:
                                                             description: The label key that the selector applies to.
@@ -860,22 +861,22 @@ spec:
                                                               the values array must be empty. If the operator is Gt or Lt, the values
                                                               array must have a single element, which will be interpreted as an integer.
                                                               This array is replaced during a strategic merge patch.
-                                                            type: array
                                                             items:
                                                               type: string
+                                                            type: array
                                                             x-kubernetes-list-type: atomic
+                                                        required:
+                                                        - key
+                                                        - operator
+                                                        type: object
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     matchFields:
                                                       description: A list of node selector requirements by node's fields.
-                                                      type: array
                                                       items:
                                                         description: |-
                                                           A node selector requirement is a selector that contains values, a key, and an operator
                                                           that relates the key and values.
-                                                        type: object
-                                                        required:
-                                                        - key
-                                                        - operator
                                                         properties:
                                                           key:
                                                             description: The label key that the selector applies to.
@@ -892,16 +893,26 @@ spec:
                                                               the values array must be empty. If the operator is Gt or Lt, the values
                                                               array must have a single element, which will be interpreted as an integer.
                                                               This array is replaced during a strategic merge patch.
-                                                            type: array
                                                             items:
                                                               type: string
+                                                            type: array
                                                             x-kubernetes-list-type: atomic
+                                                        required:
+                                                        - key
+                                                        - operator
+                                                        type: object
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
+                                                  type: object
                                                   x-kubernetes-map-type: atomic
                                                 weight:
                                                   description: Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.
-                                                  type: integer
                                                   format: int32
+                                                  type: integer
+                                              required:
+                                              - preference
+                                              - weight
+                                              type: object
                                             type: array
                                             x-kubernetes-list-type: atomic
                                           requiredDuringSchedulingIgnoredDuringExecution:
@@ -919,19 +930,13 @@ spec:
                                                     A null or empty node selector term matches no objects. The requirements of
                                                     them are ANDed.
                                                     The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.
-                                                  type: object
                                                   properties:
                                                     matchExpressions:
                                                       description: A list of node selector requirements by node's labels.
-                                                      type: array
                                                       items:
                                                         description: |-
                                                           A node selector requirement is a selector that contains values, a key, and an operator
                                                           that relates the key and values.
-                                                        type: object
-                                                        required:
-                                                        - key
-                                                        - operator
                                                         properties:
                                                           key:
                                                             description: The label key that the selector applies to.
@@ -948,22 +953,22 @@ spec:
                                                               the values array must be empty. If the operator is Gt or Lt, the values
                                                               array must have a single element, which will be interpreted as an integer.
                                                               This array is replaced during a strategic merge patch.
-                                                            type: array
                                                             items:
                                                               type: string
+                                                            type: array
                                                             x-kubernetes-list-type: atomic
+                                                        required:
+                                                        - key
+                                                        - operator
+                                                        type: object
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     matchFields:
                                                       description: A list of node selector requirements by node's fields.
-                                                      type: array
                                                       items:
                                                         description: |-
                                                           A node selector requirement is a selector that contains values, a key, and an operator
                                                           that relates the key and values.
-                                                        type: object
-                                                        required:
-                                                        - key
-                                                        - operator
                                                         properties:
                                                           key:
                                                             description: The label key that the selector applies to.
@@ -980,11 +985,17 @@ spec:
                                                               the values array must be empty. If the operator is Gt or Lt, the values
                                                               array must have a single element, which will be interpreted as an integer.
                                                               This array is replaced during a strategic merge patch.
-                                                            type: array
                                                             items:
                                                               type: string
+                                                            type: array
                                                             x-kubernetes-list-type: atomic
+                                                        required:
+                                                        - key
+                                                        - operator
+                                                        type: object
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
+                                                  type: object
                                                   x-kubernetes-map-type: atomic
                                                 type: array
                                                 x-kubernetes-list-type: atomic
@@ -1009,34 +1020,21 @@ spec:
                                               node(s) with the highest sum are the most preferred.
                                             items:
                                               description: The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
-                                              type: object
-                                              required:
-                                              - podAffinityTerm
-                                              - weight
                                               properties:
                                                 podAffinityTerm:
                                                   description: Required. A pod affinity term, associated with the corresponding weight.
-                                                  type: object
-                                                  required:
-                                                  - topologyKey
                                                   properties:
                                                     labelSelector:
                                                       description: |-
                                                         A label query over a set of resources, in this case pods.
                                                         If it's null, this PodAffinityTerm matches with no Pods.
-                                                      type: object
                                                       properties:
                                                         matchExpressions:
                                                           description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
-                                                          type: array
                                                           items:
                                                             description: |-
                                                               A label selector requirement is a selector that contains values, a key, and an operator that
                                                               relates the key and values.
-                                                            type: object
-                                                            required:
-                                                            - key
-                                                            - operator
                                                             properties:
                                                               key:
                                                                 description: key is the label key that the selector applies to.
@@ -1052,19 +1050,25 @@ spec:
                                                                   the values array must be non-empty. If the operator is Exists or DoesNotExist,
                                                                   the values array must be empty. This array is replaced during a strategic
                                                                   merge patch.
-                                                                type: array
                                                                 items:
                                                                   type: string
+                                                                type: array
                                                                 x-kubernetes-list-type: atomic
+                                                            required:
+                                                            - key
+                                                            - operator
+                                                            type: object
+                                                          type: array
                                                           x-kubernetes-list-type: atomic
                                                         matchLabels:
+                                                          additionalProperties:
+                                                            type: string
                                                           description: |-
                                                             matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
                                                             map is equivalent to an element of matchExpressions, whose key field is "key", the
                                                             operator is "In", and the values array contains only "value". The requirements are ANDed.
                                                           type: object
-                                                          additionalProperties:
-                                                            type: string
+                                                      type: object
                                                       x-kubernetes-map-type: atomic
                                                     matchLabelKeys:
                                                       description: |-
@@ -1076,10 +1080,9 @@ spec:
                                                         pod labels will be ignored. The default value is empty.
                                                         The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                                         Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
-                                                      type: array
                                                       items:
                                                         type: string
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     mismatchLabelKeys:
                                                       description: |-
@@ -1091,10 +1094,9 @@ spec:
                                                         pod labels will be ignored. The default value is empty.
                                                         The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                                         Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
-                                                      type: array
                                                       items:
                                                         type: string
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     namespaceSelector:
                                                       description: |-
@@ -1103,19 +1105,13 @@ spec:
                                                         and the ones listed in the namespaces field.
                                                         null selector and null or empty namespaces list means "this pod's namespace".
                                                         An empty selector ({}) matches all namespaces.
-                                                      type: object
                                                       properties:
                                                         matchExpressions:
                                                           description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
-                                                          type: array
                                                           items:
                                                             description: |-
                                                               A label selector requirement is a selector that contains values, a key, and an operator that
                                                               relates the key and values.
-                                                            type: object
-                                                            required:
-                                                            - key
-                                                            - operator
                                                             properties:
                                                               key:
                                                                 description: key is the label key that the selector applies to.
@@ -1131,19 +1127,25 @@ spec:
                                                                   the values array must be non-empty. If the operator is Exists or DoesNotExist,
                                                                   the values array must be empty. This array is replaced during a strategic
                                                                   merge patch.
-                                                                type: array
                                                                 items:
                                                                   type: string
+                                                                type: array
                                                                 x-kubernetes-list-type: atomic
+                                                            required:
+                                                            - key
+                                                            - operator
+                                                            type: object
+                                                          type: array
                                                           x-kubernetes-list-type: atomic
                                                         matchLabels:
+                                                          additionalProperties:
+                                                            type: string
                                                           description: |-
                                                             matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
                                                             map is equivalent to an element of matchExpressions, whose key field is "key", the
                                                             operator is "In", and the values array contains only "value". The requirements are ANDed.
                                                           type: object
-                                                          additionalProperties:
-                                                            type: string
+                                                      type: object
                                                       x-kubernetes-map-type: atomic
                                                     namespaces:
                                                       description: |-
@@ -1151,9 +1153,9 @@ spec:
                                                         The term is applied to the union of the namespaces listed in this field
                                                         and the ones selected by namespaceSelector.
                                                         null or empty namespaces list and null namespaceSelector means "this pod's namespace".
-                                                      type: array
                                                       items:
                                                         type: string
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     topologyKey:
                                                       description: |-
@@ -1163,12 +1165,19 @@ spec:
                                                         selected pods is running.
                                                         Empty topologyKey is not allowed.
                                                       type: string
+                                                  required:
+                                                  - topologyKey
+                                                  type: object
                                                 weight:
                                                   description: |-
                                                     weight associated with matching the corresponding podAffinityTerm,
                                                     in the range 1-100.
-                                                  type: integer
                                                   format: int32
+                                                  type: integer
+                                              required:
+                                              - podAffinityTerm
+                                              - weight
+                                              type: object
                                             type: array
                                             x-kubernetes-list-type: atomic
                                           requiredDuringSchedulingIgnoredDuringExecution:
@@ -1188,27 +1197,18 @@ spec:
                                                 where co-located is defined as running on a node whose value of
                                                 the label with key <topologyKey> matches that of any node on which
                                                 a pod of the set of pods is running
-                                              type: object
-                                              required:
-                                              - topologyKey
                                               properties:
                                                 labelSelector:
                                                   description: |-
                                                     A label query over a set of resources, in this case pods.
                                                     If it's null, this PodAffinityTerm matches with no Pods.
-                                                  type: object
                                                   properties:
                                                     matchExpressions:
                                                       description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
-                                                      type: array
                                                       items:
                                                         description: |-
                                                           A label selector requirement is a selector that contains values, a key, and an operator that
                                                           relates the key and values.
-                                                        type: object
-                                                        required:
-                                                        - key
-                                                        - operator
                                                         properties:
                                                           key:
                                                             description: key is the label key that the selector applies to.
@@ -1224,19 +1224,25 @@ spec:
                                                               the values array must be non-empty. If the operator is Exists or DoesNotExist,
                                                               the values array must be empty. This array is replaced during a strategic
                                                               merge patch.
-                                                            type: array
                                                             items:
                                                               type: string
+                                                            type: array
                                                             x-kubernetes-list-type: atomic
+                                                        required:
+                                                        - key
+                                                        - operator
+                                                        type: object
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     matchLabels:
+                                                      additionalProperties:
+                                                        type: string
                                                       description: |-
                                                         matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
                                                         map is equivalent to an element of matchExpressions, whose key field is "key", the
                                                         operator is "In", and the values array contains only "value". The requirements are ANDed.
                                                       type: object
-                                                      additionalProperties:
-                                                        type: string
+                                                  type: object
                                                   x-kubernetes-map-type: atomic
                                                 matchLabelKeys:
                                                   description: |-
@@ -1248,10 +1254,9 @@ spec:
                                                     pod labels will be ignored. The default value is empty.
                                                     The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                                     Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
-                                                  type: array
                                                   items:
                                                     type: string
+                                                  type: array
                                                   x-kubernetes-list-type: atomic
                                                 mismatchLabelKeys:
                                                   description: |-
@@ -1263,10 +1268,9 @@ spec:
                                                     pod labels will be ignored. The default value is empty.
                                                     The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                                     Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
-                                                  type: array
                                                   items:
                                                     type: string
+                                                  type: array
                                                   x-kubernetes-list-type: atomic
                                                 namespaceSelector:
                                                   description: |-
@@ -1275,19 +1279,13 @@ spec:
                                                     and the ones listed in the namespaces field.
                                                     null selector and null or empty namespaces list means "this pod's namespace".
                                                     An empty selector ({}) matches all namespaces.
-                                                  type: object
                                                   properties:
                                                     matchExpressions:
                                                       description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
-                                                      type: array
                                                       items:
                                                         description: |-
                                                           A label selector requirement is a selector that contains values, a key, and an operator that
                                                           relates the key and values.
-                                                        type: object
-                                                        required:
-                                                        - key
-                                                        - operator
                                                         properties:
                                                           key:
                                                             description: key is the label key that the selector applies to.
@@ -1303,19 +1301,25 @@ spec:
                                                               the values array must be non-empty. If the operator is Exists or DoesNotExist,
                                                               the values array must be empty. This array is replaced during a strategic
                                                               merge patch.
-                                                            type: array
                                                             items:
                                                               type: string
+                                                            type: array
                                                             x-kubernetes-list-type: atomic
+                                                        required:
+                                                        - key
+                                                        - operator
+                                                        type: object
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     matchLabels:
+                                                      additionalProperties:
+                                                        type: string
                                                       description: |-
                                                         matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
                                                         map is equivalent to an element of matchExpressions, whose key field is "key", the
                                                         operator is "In", and the values array contains only "value". The requirements are ANDed.
                                                       type: object
-                                                      additionalProperties:
-                                                        type: string
+                                                  type: object
                                                   x-kubernetes-map-type: atomic
                                                 namespaces:
                                                   description: |-
@@ -1323,9 +1327,9 @@ spec:
                                                     The term is applied to the union of the namespaces listed in this field
                                                     and the ones selected by namespaceSelector.
                                                     null or empty namespaces list and null namespaceSelector means "this pod's namespace".
-                                                  type: array
                                                   items:
                                                     type: string
+                                                  type: array
                                                   x-kubernetes-list-type: atomic
                                                 topologyKey:
                                                   description: |-
@@ -1335,6 +1339,9 @@ spec:
                                                     selected pods is running.
                                                     Empty topologyKey is not allowed.
                                                   type: string
+                                              required:
+                                              - topologyKey
+                                              type: object
                                             type: array
                                             x-kubernetes-list-type: atomic
                                         type: object
@@ -1349,39 +1356,26 @@ spec:
                                               most preferred is the one with the greatest sum of weights, i.e.
                                               for each node that meets all of the scheduling requirements (resource
                                               request, requiredDuringScheduling anti-affinity expressions, etc.),
-                                              compute a sum by iterating through the elements of this field and adding
-                                              "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+                                              compute a sum by iterating through the elements of this field and subtracting
+                                              "weight" from the sum if the node has pods which matches the corresponding podAffinityTerm; the
                                               node(s) with the highest sum are the most preferred.
                                             items:
                                               description: The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
-                                              type: object
-                                              required:
-                                              - podAffinityTerm
-                                              - weight
                                               properties:
                                                 podAffinityTerm:
                                                   description: Required. A pod affinity term, associated with the corresponding weight.
-                                                  type: object
-                                                  required:
-                                                  - topologyKey
                                                   properties:
                                                     labelSelector:
                                                       description: |-
                                                         A label query over a set of resources, in this case pods.
                                                         If it's null, this PodAffinityTerm matches with no Pods.
-                                                      type: object
                                                       properties:
                                                         matchExpressions:
                                                           description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
-                                                          type: array
                                                           items:
                                                             description: |-
                                                               A label selector requirement is a selector that contains values, a key, and an operator that
                                                               relates the key and values.
-                                                            type: object
-                                                            required:
-                                                            - key
-                                                            - operator
                                                             properties:
                                                               key:
                                                                 description: key is the label key that the selector applies to.
@@ -1397,19 +1391,25 @@ spec:
                                                                   the values array must be non-empty. If the operator is Exists or DoesNotExist,
                                                                   the values array must be empty. This array is replaced during a strategic
                                                                   merge patch.
-                                                                type: array
                                                                 items:
                                                                   type: string
+                                                                type: array
                                                                 x-kubernetes-list-type: atomic
+                                                            required:
+                                                            - key
+                                                            - operator
+                                                            type: object
+                                                          type: array
                                                           x-kubernetes-list-type: atomic
                                                         matchLabels:
+                                                          additionalProperties:
+                                                            type: string
                                                           description: |-
                                                             matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
                                                             map is equivalent to an element of matchExpressions, whose key field is "key", the
                                                             operator is "In", and the values array contains only "value". The requirements are ANDed.
                                                           type: object
-                                                          additionalProperties:
-                                                            type: string
+                                                      type: object
                                                       x-kubernetes-map-type: atomic
                                                     matchLabelKeys:
                                                       description: |-
@@ -1421,10 +1421,9 @@ spec:
                                                         pod labels will be ignored. The default value is empty.
                                                         The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                                         Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
-                                                      type: array
                                                       items:
                                                         type: string
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     mismatchLabelKeys:
                                                       description: |-
@@ -1436,10 +1435,9 @@ spec:
                                                         pod labels will be ignored. The default value is empty.
                                                         The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                                         Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
-                                                      type: array
                                                       items:
                                                         type: string
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     namespaceSelector:
                                                       description: |-
@@ -1448,19 +1446,13 @@ spec:
                                                         and the ones listed in the namespaces field.
                                                         null selector and null or empty namespaces list means "this pod's namespace".
                                                         An empty selector ({}) matches all namespaces.
-                                                      type: object
                                                       properties:
                                                         matchExpressions:
                                                           description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
-                                                          type: array
                                                           items:
                                                             description: |-
                                                               A label selector requirement is a selector that contains values, a key, and an operator that
                                                               relates the key and values.
-                                                            type: object
-                                                            required:
-                                                            - key
-                                                            - operator
                                                             properties:
                                                               key:
                                                                 description: key is the label key that the selector applies to.
@@ -1476,19 +1468,25 @@ spec:
                                                                   the values array must be non-empty. If the operator is Exists or DoesNotExist,
                                                                   the values array must be empty. This array is replaced during a strategic
                                                                   merge patch.
-                                                                type: array
                                                                 items:
                                                                   type: string
+                                                                type: array
                                                                 x-kubernetes-list-type: atomic
+                                                            required:
+                                                            - key
+                                                            - operator
+                                                            type: object
+                                                          type: array
                                                           x-kubernetes-list-type: atomic
                                                         matchLabels:
+                                                          additionalProperties:
+                                                            type: string
                                                           description: |-
                                                             matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
                                                             map is equivalent to an element of matchExpressions, whose key field is "key", the
                                                             operator is "In", and the values array contains only "value". The requirements are ANDed.
                                                           type: object
-                                                          additionalProperties:
-                                                            type: string
+                                                      type: object
                                                       x-kubernetes-map-type: atomic
                                                     namespaces:
                                                       description: |-
@@ -1496,9 +1494,9 @@ spec:
                                                         The term is applied to the union of the namespaces listed in this field
                                                         and the ones selected by namespaceSelector.
                                                         null or empty namespaces list and null namespaceSelector means "this pod's namespace".
-                                                      type: array
                                                       items:
                                                         type: string
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     topologyKey:
                                                       description: |-
@@ -1508,12 +1506,19 @@ spec:
                                                         selected pods is running.
                                                         Empty topologyKey is not allowed.
                                                       type: string
+                                                  required:
+                                                  - topologyKey
+                                                  type: object
                                                 weight:
                                                   description: |-
                                                     weight associated with matching the corresponding podAffinityTerm,
                                                     in the range 1-100.
-                                                  type: integer
                                                   format: int32
+                                                  type: integer
+                                              required:
+                                              - podAffinityTerm
+                                              - weight
+                                              type: object
                                             type: array
                                             x-kubernetes-list-type: atomic
                                           requiredDuringSchedulingIgnoredDuringExecution:
@@ -1533,27 +1538,18 @@ spec:
                                                 where co-located is defined as running on a node whose value of
                                                 the label with key <topologyKey> matches that of any node on which
                                                 a pod of the set of pods is running
-                                              type: object
-                                              required:
-                                              - topologyKey
                                               properties:
                                                 labelSelector:
                                                   description: |-
                                                     A label query over a set of resources, in this case pods.
                                                     If it's null, this PodAffinityTerm matches with no Pods.
-                                                  type: object
                                                   properties:
                                                     matchExpressions:
                                                       description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
-                                                      type: array
                                                       items:
                                                         description: |-
                                                           A label selector requirement is a selector that contains values, a key, and an operator that
                                                           relates the key and values.
-                                                        type: object
-                                                        required:
-                                                        - key
-                                                        - operator
                                                         properties:
                                                           key:
                                                             description: key is the label key that the selector applies to.
@@ -1569,19 +1565,25 @@ spec:
                                                               the values array must be non-empty. If the operator is Exists or DoesNotExist,
                                                               the values array must be empty. This array is replaced during a strategic
                                                               merge patch.
-                                                            type: array
                                                             items:
                                                               type: string
+                                                            type: array
                                                             x-kubernetes-list-type: atomic
+                                                        required:
+                                                        - key
+                                                        - operator
+                                                        type: object
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     matchLabels:
+                                                      additionalProperties:
+                                                        type: string
                                                       description: |-
                                                         matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
                                                         map is equivalent to an element of matchExpressions, whose key field is "key", the
                                                         operator is "In", and the values array contains only "value". The requirements are ANDed.
                                                       type: object
-                                                      additionalProperties:
-                                                        type: string
+                                                  type: object
                                                   x-kubernetes-map-type: atomic
                                                 matchLabelKeys:
                                                   description: |-
@@ -1593,10 +1595,9 @@ spec:
                                                     pod labels will be ignored. The default value is empty.
                                                     The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                                     Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
-                                                  type: array
                                                   items:
                                                     type: string
+                                                  type: array
                                                   x-kubernetes-list-type: atomic
                                                 mismatchLabelKeys:
                                                   description: |-
@@ -1608,10 +1609,9 @@ spec:
                                                     pod labels will be ignored. The default value is empty.
                                                     The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                                     Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
-                                                  type: array
                                                   items:
                                                     type: string
+                                                  type: array
                                                   x-kubernetes-list-type: atomic
                                                 namespaceSelector:
                                                   description: |-
@@ -1620,19 +1620,13 @@ spec:
                                                     and the ones listed in the namespaces field.
                                                     null selector and null or empty namespaces list means "this pod's namespace".
                                                     An empty selector ({}) matches all namespaces.
-                                                  type: object
                                                   properties:
                                                     matchExpressions:
                                                       description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
-                                                      type: array
                                                       items:
                                                         description: |-
                                                           A label selector requirement is a selector that contains values, a key, and an operator that
                                                           relates the key and values.
-                                                        type: object
-                                                        required:
-                                                        - key
-                                                        - operator
                                                         properties:
                                                           key:
                                                             description: key is the label key that the selector applies to.
@@ -1648,19 +1642,25 @@ spec:
                                                               the values array must be non-empty. If the operator is Exists or DoesNotExist,
                                                               the values array must be empty. This array is replaced during a strategic
                                                               merge patch.
-                                                            type: array
                                                             items:
                                                               type: string
+                                                            type: array
                                                             x-kubernetes-list-type: atomic
+                                                        required:
+                                                        - key
+                                                        - operator
+                                                        type: object
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     matchLabels:
+                                                      additionalProperties:
+                                                        type: string
                                                       description: |-
                                                         matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
                                                         map is equivalent to an element of matchExpressions, whose key field is "key", the
                                                         operator is "In", and the values array contains only "value". The requirements are ANDed.
                                                       type: object
-                                                      additionalProperties:
-                                                        type: string
+                                                  type: object
                                                   x-kubernetes-map-type: atomic
                                                 namespaces:
                                                   description: |-
@@ -1668,9 +1668,9 @@ spec:
                                                     The term is applied to the union of the namespaces listed in this field
                                                     and the ones selected by namespaceSelector.
                                                     null or empty namespaces list and null namespaceSelector means "this pod's namespace".
-                                                  type: array
                                                   items:
                                                     type: string
+                                                  type: array
                                                   x-kubernetes-list-type: atomic
                                                 topologyKey:
                                                   description: |-
@@ -1680,6 +1680,9 @@ spec:
                                                     selected pods is running.
                                                     Empty topologyKey is not allowed.
                                                   type: string
+                                              required:
+                                              - topologyKey
+                                              type: object
                                             type: array
                                             x-kubernetes-list-type: atomic
                                         type: object
@@ -1690,9 +1693,9 @@ spec:
                                       description: |-
                                         LocalObjectReference contains enough information to let you locate the
                                         referenced object inside the same namespace.
-                                      type: object
                                       properties:
                                         name:
+                                          default: ""
                                           description: |-
                                             Name of the referent.
                                             This field is effectively required, but due to backwards compatibility is
@@ -1700,9 +1703,12 @@ spec:
                                             almost certainly wrong.
                                             More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                                           type: string
-                                          default: ""
+                                      type: object
                                       x-kubernetes-map-type: atomic
                                     type: array
+                                    x-kubernetes-list-map-keys:
+                                    - name
+                                    x-kubernetes-list-type: map
                                   nodeSelector:
                                     additionalProperties:
                                       type: string
@@ -1714,6 +1720,40 @@ spec:
                                   priorityClassName:
                                     description: If specified, the pod's priorityClassName.
                                     type: string
+                                  resources:
+                                    description: |-
+                                      If specified, the pod's resource requirements.
+                                      These values override the global resource configuration flags.
+                                      Note that when only specifying resource limits, ensure they are greater than or equal
+                                      to the corresponding global resource requests configured via controller flags
+                                      (--acme-http01-solver-resource-request-cpu, --acme-http01-solver-resource-request-memory).
+                                      Kubernetes will reject pod creation if limits are lower than requests, causing challenge failures.
+                                    properties:
+                                      limits:
+                                        additionalProperties:
+                                          anyOf:
+                                          - type: integer
+                                          - type: string
+                                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                          x-kubernetes-int-or-string: true
+                                        description: |-
+                                          Limits describes the maximum amount of compute resources allowed.
+                                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                                        type: object
+                                      requests:
+                                        additionalProperties:
+                                          anyOf:
+                                          - type: integer
+                                          - type: string
+                                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                          x-kubernetes-int-or-string: true
+                                        description: |-
+                                          Requests describes the minimum amount of compute resources required.
+                                          If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                                          otherwise to the global values configured via controller flags. Requests cannot exceed Limits.
+                                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                                        type: object
+                                    type: object
                                   securityContext:
                                     description: If specified, the pod's security context
                                     properties:
@@ -1826,9 +1866,10 @@ spec:
                                           even if they are not included in this list.
                                           Note that this field cannot be set when spec.os.name is windows.
                                         items:
-                                          type: integer
                                           format: int64
+                                          type: integer
                                         type: array
+                                        x-kubernetes-list-type: atomic
                                       sysctls:
                                         description: |-
                                           Sysctls hold a list of namespaced sysctls used for the pod. Pods with unsupported
@@ -1836,10 +1877,6 @@ spec:
                                           Note that this field cannot be set when spec.os.name is windows.
                                         items:
                                           description: Sysctl defines a kernel parameter to be set
-                                          type: object
-                                          required:
-                                          - name
-                                          - value
                                           properties:
                                             name:
                                               description: Name of a property to set
@@ -1847,7 +1884,12 @@ spec:
                                             value:
                                               description: Value of a property to set
                                               type: string
+                                          required:
+                                          - name
+                                          - value
+                                          type: object
                                         type: array
+                                        x-kubernetes-list-type: atomic
                                     type: object
                                   serviceAccountName:
                                     description: If specified, the pod's service account
@@ -1858,7 +1900,6 @@ spec:
                                       description: |-
                                         The pod this Toleration is attached to tolerates any taint that matches
                                         the triple <key,value,effect> using the matching operator <operator>.
-                                      type: object
                                       properties:
                                         effect:
                                           description: |-
@@ -1883,14 +1924,16 @@ spec:
                                             of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default,
                                             it is not set, which means tolerate the taint forever (do not evict). Zero and
                                             negative values will be treated as 0 (evict immediately) by the system.
-                                          type: integer
                                           format: int64
+                                          type: integer
                                         value:
                                           description: |-
                                             Value is the taint value the toleration matches to.
                                             If the operator is Exists, the value should be empty, otherwise just a regular string.
                                           type: string
+                                      type: object
                                     type: array
+                                    x-kubernetes-list-type: atomic
                                 type: object
                             type: object
                           serviceType:
@@ -2003,26 +2046,16 @@ spec:
                                               description: |-
                                                 An empty preferred scheduling term matches all objects with implicit weight 0
                                                 (i.e. it's a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).
-                                              type: object
-                                              required:
-                                              - preference
-                                              - weight
                                               properties:
                                                 preference:
                                                   description: A node selector term, associated with the corresponding weight.
-                                                  type: object
                                                   properties:
                                                     matchExpressions:
                                                       description: A list of node selector requirements by node's labels.
-                                                      type: array
                                                       items:
                                                         description: |-
                                                           A node selector requirement is a selector that contains values, a key, and an operator
                                                           that relates the key and values.
-                                                        type: object
-                                                        required:
-                                                        - key
-                                                        - operator
                                                         properties:
                                                           key:
                                                             description: The label key that the selector applies to.
@@ -2039,22 +2072,22 @@ spec:
                                                               the values array must be empty. If the operator is Gt or Lt, the values
                                                               array must have a single element, which will be interpreted as an integer.
                                                               This array is replaced during a strategic merge patch.
-                                                            type: array
                                                             items:
                                                               type: string
+                                                            type: array
                                                             x-kubernetes-list-type: atomic
+                                                        required:
+                                                        - key
+                                                        - operator
+                                                        type: object
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     matchFields:
                                                       description: A list of node selector requirements by node's fields.
-                                                      type: array
                                                       items:
                                                         description: |-
                                                           A node selector requirement is a selector that contains values, a key, and an operator
                                                           that relates the key and values.
-                                                        type: object
-                                                        required:
-                                                        - key
-                                                        - operator
                                                         properties:
                                                           key:
                                                             description: The label key that the selector applies to.
@@ -2071,16 +2104,26 @@ spec:
                                                               the values array must be empty. If the operator is Gt or Lt, the values
                                                               array must have a single element, which will be interpreted as an integer.
                                                               This array is replaced during a strategic merge patch.
-                                                            type: array
                                                             items:
                                                               type: string
+                                                            type: array
                                                             x-kubernetes-list-type: atomic
+                                                        required:
+                                                        - key
+                                                        - operator
+                                                        type: object
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
+                                                  type: object
                                                   x-kubernetes-map-type: atomic
                                                 weight:
                                                   description: Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.
-                                                  type: integer
                                                   format: int32
+                                                  type: integer
+                                              required:
+                                              - preference
+                                              - weight
+                                              type: object
                                             type: array
                                             x-kubernetes-list-type: atomic
                                           requiredDuringSchedulingIgnoredDuringExecution:
@@ -2098,19 +2141,13 @@ spec:
                                                     A null or empty node selector term matches no objects. The requirements of
                                                     them are ANDed.
                                                     The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.
-                                                  type: object
                                                   properties:
                                                     matchExpressions:
                                                       description: A list of node selector requirements by node's labels.
-                                                      type: array
                                                       items:
                                                         description: |-
                                                           A node selector requirement is a selector that contains values, a key, and an operator
                                                           that relates the key and values.
-                                                        type: object
-                                                        required:
-                                                        - key
-                                                        - operator
                                                         properties:
                                                           key:
                                                             description: The label key that the selector applies to.
@@ -2127,22 +2164,22 @@ spec:
                                                               the values array must be empty. If the operator is Gt or Lt, the values
                                                               array must have a single element, which will be interpreted as an integer.
                                                               This array is replaced during a strategic merge patch.
-                                                            type: array
                                                             items:
                                                               type: string
+                                                            type: array
                                                             x-kubernetes-list-type: atomic
+                                                        required:
+                                                        - key
+                                                        - operator
+                                                        type: object
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     matchFields:
                                                       description: A list of node selector requirements by node's fields.
-                                                      type: array
                                                       items:
                                                         description: |-
                                                           A node selector requirement is a selector that contains values, a key, and an operator
                                                           that relates the key and values.
-                                                        type: object
-                                                        required:
-                                                        - key
-                                                        - operator
                                                         properties:
                                                           key:
                                                             description: The label key that the selector applies to.
@@ -2159,11 +2196,17 @@ spec:
                                                               the values array must be empty. If the operator is Gt or Lt, the values
                                                               array must have a single element, which will be interpreted as an integer.
                                                               This array is replaced during a strategic merge patch.
-                                                            type: array
                                                             items:
                                                               type: string
+                                                            type: array
                                                             x-kubernetes-list-type: atomic
+                                                        required:
+                                                        - key
+                                                        - operator
+                                                        type: object
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
+                                                  type: object
                                                   x-kubernetes-map-type: atomic
                                                 type: array
                                                 x-kubernetes-list-type: atomic
@@ -2188,34 +2231,21 @@ spec:
                                               node(s) with the highest sum are the most preferred.
                                             items:
                                               description: The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
-                                              type: object
-                                              required:
-                                              - podAffinityTerm
-                                              - weight
                                               properties:
                                                 podAffinityTerm:
                                                   description: Required. A pod affinity term, associated with the corresponding weight.
-                                                  type: object
-                                                  required:
-                                                  - topologyKey
                                                   properties:
                                                     labelSelector:
                                                       description: |-
                                                         A label query over a set of resources, in this case pods.
                                                         If it's null, this PodAffinityTerm matches with no Pods.
-                                                      type: object
                                                       properties:
                                                         matchExpressions:
                                                           description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
-                                                          type: array
                                                           items:
                                                             description: |-
                                                               A label selector requirement is a selector that contains values, a key, and an operator that
                                                               relates the key and values.
-                                                            type: object
-                                                            required:
-                                                            - key
-                                                            - operator
                                                             properties:
                                                               key:
                                                                 description: key is the label key that the selector applies to.
@@ -2231,19 +2261,25 @@ spec:
                                                                   the values array must be non-empty. If the operator is Exists or DoesNotExist,
                                                                   the values array must be empty. This array is replaced during a strategic
                                                                   merge patch.
-                                                                type: array
                                                                 items:
                                                                   type: string
+                                                                type: array
                                                                 x-kubernetes-list-type: atomic
+                                                            required:
+                                                            - key
+                                                            - operator
+                                                            type: object
+                                                          type: array
                                                           x-kubernetes-list-type: atomic
                                                         matchLabels:
+                                                          additionalProperties:
+                                                            type: string
                                                           description: |-
                                                             matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
                                                             map is equivalent to an element of matchExpressions, whose key field is "key", the
                                                             operator is "In", and the values array contains only "value". The requirements are ANDed.
                                                           type: object
-                                                          additionalProperties:
-                                                            type: string
+                                                      type: object
                                                       x-kubernetes-map-type: atomic
                                                     matchLabelKeys:
                                                       description: |-
@@ -2255,10 +2291,9 @@ spec:
                                                         pod labels will be ignored. The default value is empty.
                                                         The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                                         Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
-                                                      type: array
                                                       items:
                                                         type: string
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     mismatchLabelKeys:
                                                       description: |-
@@ -2270,10 +2305,9 @@ spec:
                                                         pod labels will be ignored. The default value is empty.
                                                         The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                                         Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
-                                                      type: array
                                                       items:
                                                         type: string
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     namespaceSelector:
                                                       description: |-
@@ -2282,19 +2316,13 @@ spec:
                                                         and the ones listed in the namespaces field.
                                                         null selector and null or empty namespaces list means "this pod's namespace".
                                                         An empty selector ({}) matches all namespaces.
-                                                      type: object
                                                       properties:
                                                         matchExpressions:
                                                           description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
-                                                          type: array
                                                           items:
                                                             description: |-
                                                               A label selector requirement is a selector that contains values, a key, and an operator that
                                                               relates the key and values.
-                                                            type: object
-                                                            required:
-                                                            - key
-                                                            - operator
                                                             properties:
                                                               key:
                                                                 description: key is the label key that the selector applies to.
@@ -2310,19 +2338,25 @@ spec:
                                                                   the values array must be non-empty. If the operator is Exists or DoesNotExist,
                                                                   the values array must be empty. This array is replaced during a strategic
                                                                   merge patch.
-                                                                type: array
                                                                 items:
                                                                   type: string
+                                                                type: array
                                                                 x-kubernetes-list-type: atomic
+                                                            required:
+                                                            - key
+                                                            - operator
+                                                            type: object
+                                                          type: array
                                                           x-kubernetes-list-type: atomic
                                                         matchLabels:
+                                                          additionalProperties:
+                                                            type: string
                                                           description: |-
                                                             matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
                                                             map is equivalent to an element of matchExpressions, whose key field is "key", the
                                                             operator is "In", and the values array contains only "value". The requirements are ANDed.
                                                           type: object
-                                                          additionalProperties:
-                                                            type: string
+                                                      type: object
                                                       x-kubernetes-map-type: atomic
                                                     namespaces:
                                                       description: |-
@@ -2330,9 +2364,9 @@ spec:
                                                         The term is applied to the union of the namespaces listed in this field
                                                         and the ones selected by namespaceSelector.
                                                         null or empty namespaces list and null namespaceSelector means "this pod's namespace".
-                                                      type: array
                                                       items:
                                                         type: string
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     topologyKey:
                                                       description: |-
@@ -2342,12 +2376,19 @@ spec:
                                                         selected pods is running.
                                                         Empty topologyKey is not allowed.
                                                       type: string
+                                                  required:
+                                                  - topologyKey
+                                                  type: object
                                                 weight:
                                                   description: |-
                                                     weight associated with matching the corresponding podAffinityTerm,
                                                     in the range 1-100.
-                                                  type: integer
                                                   format: int32
+                                                  type: integer
+                                              required:
+                                              - podAffinityTerm
+                                              - weight
+                                              type: object
                                             type: array
                                             x-kubernetes-list-type: atomic
                                           requiredDuringSchedulingIgnoredDuringExecution:
@@ -2367,27 +2408,18 @@ spec:
                                                 where co-located is defined as running on a node whose value of
                                                 the label with key <topologyKey> matches that of any node on which
                                                 a pod of the set of pods is running
-                                              type: object
-                                              required:
-                                              - topologyKey
                                               properties:
                                                 labelSelector:
                                                   description: |-
                                                     A label query over a set of resources, in this case pods.
                                                     If it's null, this PodAffinityTerm matches with no Pods.
-                                                  type: object
                                                   properties:
                                                     matchExpressions:
                                                       description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
-                                                      type: array
                                                       items:
                                                         description: |-
                                                           A label selector requirement is a selector that contains values, a key, and an operator that
                                                           relates the key and values.
-                                                        type: object
-                                                        required:
-                                                        - key
-                                                        - operator
                                                         properties:
                                                           key:
                                                             description: key is the label key that the selector applies to.
@@ -2403,19 +2435,25 @@ spec:
                                                               the values array must be non-empty. If the operator is Exists or DoesNotExist,
                                                               the values array must be empty. This array is replaced during a strategic
                                                               merge patch.
-                                                            type: array
                                                             items:
                                                               type: string
+                                                            type: array
                                                             x-kubernetes-list-type: atomic
+                                                        required:
+                                                        - key
+                                                        - operator
+                                                        type: object
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     matchLabels:
+                                                      additionalProperties:
+                                                        type: string
                                                       description: |-
                                                         matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
                                                         map is equivalent to an element of matchExpressions, whose key field is "key", the
                                                         operator is "In", and the values array contains only "value". The requirements are ANDed.
                                                       type: object
-                                                      additionalProperties:
-                                                        type: string
+                                                  type: object
                                                   x-kubernetes-map-type: atomic
                                                 matchLabelKeys:
                                                   description: |-
@@ -2427,10 +2465,9 @@ spec:
                                                     pod labels will be ignored. The default value is empty.
                                                     The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                                     Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
-                                                  type: array
                                                   items:
                                                     type: string
+                                                  type: array
                                                   x-kubernetes-list-type: atomic
                                                 mismatchLabelKeys:
                                                   description: |-
@@ -2442,10 +2479,9 @@ spec:
                                                     pod labels will be ignored. The default value is empty.
                                                     The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                                     Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
-                                                  type: array
                                                   items:
                                                     type: string
+                                                  type: array
                                                   x-kubernetes-list-type: atomic
                                                 namespaceSelector:
                                                   description: |-
@@ -2454,19 +2490,13 @@ spec:
                                                     and the ones listed in the namespaces field.
                                                     null selector and null or empty namespaces list means "this pod's namespace".
                                                     An empty selector ({}) matches all namespaces.
-                                                  type: object
                                                   properties:
                                                     matchExpressions:
                                                       description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
-                                                      type: array
                                                       items:
                                                         description: |-
                                                           A label selector requirement is a selector that contains values, a key, and an operator that
                                                           relates the key and values.
-                                                        type: object
-                                                        required:
-                                                        - key
-                                                        - operator
                                                         properties:
                                                           key:
                                                             description: key is the label key that the selector applies to.
@@ -2482,19 +2512,25 @@ spec:
                                                               the values array must be non-empty. If the operator is Exists or DoesNotExist,
                                                               the values array must be empty. This array is replaced during a strategic
                                                               merge patch.
-                                                            type: array
                                                             items:
                                                               type: string
+                                                            type: array
                                                             x-kubernetes-list-type: atomic
+                                                        required:
+                                                        - key
+                                                        - operator
+                                                        type: object
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     matchLabels:
+                                                      additionalProperties:
+                                                        type: string
                                                       description: |-
                                                         matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
                                                         map is equivalent to an element of matchExpressions, whose key field is "key", the
                                                         operator is "In", and the values array contains only "value". The requirements are ANDed.
                                                       type: object
-                                                      additionalProperties:
-                                                        type: string
+                                                  type: object
                                                   x-kubernetes-map-type: atomic
                                                 namespaces:
                                                   description: |-
@@ -2502,9 +2538,9 @@ spec:
                                                     The term is applied to the union of the namespaces listed in this field
                                                     and the ones selected by namespaceSelector.
                                                     null or empty namespaces list and null namespaceSelector means "this pod's namespace".
-                                                  type: array
                                                   items:
                                                     type: string
+                                                  type: array
                                                   x-kubernetes-list-type: atomic
                                                 topologyKey:
                                                   description: |-
@@ -2514,6 +2550,9 @@ spec:
                                                     selected pods is running.
                                                     Empty topologyKey is not allowed.
                                                   type: string
+                                              required:
+                                              - topologyKey
+                                              type: object
                                             type: array
                                             x-kubernetes-list-type: atomic
                                         type: object
@@ -2528,39 +2567,26 @@ spec:
                                               most preferred is the one with the greatest sum of weights, i.e.
                                               for each node that meets all of the scheduling requirements (resource
                                               request, requiredDuringScheduling anti-affinity expressions, etc.),
-                                              compute a sum by iterating through the elements of this field and adding
-                                              "weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the
+                                              compute a sum by iterating through the elements of this field and subtracting
+                                              "weight" from the sum if the node has pods which matches the corresponding podAffinityTerm; the
                                               node(s) with the highest sum are the most preferred.
                                             items:
                                               description: The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
-                                              type: object
-                                              required:
-                                              - podAffinityTerm
-                                              - weight
                                               properties:
                                                 podAffinityTerm:
                                                   description: Required. A pod affinity term, associated with the corresponding weight.
-                                                  type: object
-                                                  required:
-                                                  - topologyKey
                                                   properties:
                                                     labelSelector:
                                                       description: |-
                                                         A label query over a set of resources, in this case pods.
                                                         If it's null, this PodAffinityTerm matches with no Pods.
-                                                      type: object
                                                       properties:
                                                         matchExpressions:
                                                           description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
-                                                          type: array
                                                           items:
                                                             description: |-
                                                               A label selector requirement is a selector that contains values, a key, and an operator that
                                                               relates the key and values.
-                                                            type: object
-                                                            required:
-                                                            - key
-                                                            - operator
                                                             properties:
                                                               key:
                                                                 description: key is the label key that the selector applies to.
@@ -2576,19 +2602,25 @@ spec:
                                                                   the values array must be non-empty. If the operator is Exists or DoesNotExist,
                                                                   the values array must be empty. This array is replaced during a strategic
                                                                   merge patch.
-                                                                type: array
                                                                 items:
                                                                   type: string
+                                                                type: array
                                                                 x-kubernetes-list-type: atomic
+                                                            required:
+                                                            - key
+                                                            - operator
+                                                            type: object
+                                                          type: array
                                                           x-kubernetes-list-type: atomic
                                                         matchLabels:
+                                                          additionalProperties:
+                                                            type: string
                                                           description: |-
                                                             matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
                                                             map is equivalent to an element of matchExpressions, whose key field is "key", the
                                                             operator is "In", and the values array contains only "value". The requirements are ANDed.
                                                           type: object
-                                                          additionalProperties:
-                                                            type: string
+                                                      type: object
                                                       x-kubernetes-map-type: atomic
                                                     matchLabelKeys:
                                                       description: |-
@@ -2600,10 +2632,9 @@ spec:
                                                         pod labels will be ignored. The default value is empty.
                                                         The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                                         Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
-                                                      type: array
                                                       items:
                                                         type: string
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     mismatchLabelKeys:
                                                       description: |-
@@ -2615,10 +2646,9 @@ spec:
                                                         pod labels will be ignored. The default value is empty.
                                                         The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                                         Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                                        This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
-                                                      type: array
                                                       items:
                                                         type: string
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     namespaceSelector:
                                                       description: |-
@@ -2627,19 +2657,13 @@ spec:
                                                         and the ones listed in the namespaces field.
                                                         null selector and null or empty namespaces list means "this pod's namespace".
                                                         An empty selector ({}) matches all namespaces.
-                                                      type: object
                                                       properties:
                                                         matchExpressions:
                                                           description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
-                                                          type: array
                                                           items:
                                                             description: |-
                                                               A label selector requirement is a selector that contains values, a key, and an operator that
                                                               relates the key and values.
-                                                            type: object
-                                                            required:
-                                                            - key
-                                                            - operator
                                                             properties:
                                                               key:
                                                                 description: key is the label key that the selector applies to.
@@ -2655,19 +2679,25 @@ spec:
                                                                   the values array must be non-empty. If the operator is Exists or DoesNotExist,
                                                                   the values array must be empty. This array is replaced during a strategic
                                                                   merge patch.
-                                                                type: array
                                                                 items:
                                                                   type: string
+                                                                type: array
                                                                 x-kubernetes-list-type: atomic
+                                                            required:
+                                                            - key
+                                                            - operator
+                                                            type: object
+                                                          type: array
                                                           x-kubernetes-list-type: atomic
                                                         matchLabels:
+                                                          additionalProperties:
+                                                            type: string
                                                           description: |-
                                                             matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
                                                             map is equivalent to an element of matchExpressions, whose key field is "key", the
                                                             operator is "In", and the values array contains only "value". The requirements are ANDed.
                                                           type: object
-                                                          additionalProperties:
-                                                            type: string
+                                                      type: object
                                                       x-kubernetes-map-type: atomic
                                                     namespaces:
                                                       description: |-
@@ -2675,9 +2705,9 @@ spec:
                                                         The term is applied to the union of the namespaces listed in this field
                                                         and the ones selected by namespaceSelector.
                                                         null or empty namespaces list and null namespaceSelector means "this pod's namespace".
-                                                      type: array
                                                       items:
                                                         type: string
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     topologyKey:
                                                       description: |-
@@ -2687,12 +2717,19 @@ spec:
                                                         selected pods is running.
                                                         Empty topologyKey is not allowed.
                                                       type: string
+                                                  required:
+                                                  - topologyKey
+                                                  type: object
                                                 weight:
                                                   description: |-
                                                     weight associated with matching the corresponding podAffinityTerm,
                                                     in the range 1-100.
-                                                  type: integer
                                                   format: int32
+                                                  type: integer
+                                              required:
+                                              - podAffinityTerm
+                                              - weight
+                                              type: object
                                             type: array
                                             x-kubernetes-list-type: atomic
                                           requiredDuringSchedulingIgnoredDuringExecution:
@@ -2712,27 +2749,18 @@ spec:
                                                 where co-located is defined as running on a node whose value of
                                                 the label with key <topologyKey> matches that of any node on which
                                                 a pod of the set of pods is running
-                                              type: object
-                                              required:
-                                              - topologyKey
                                               properties:
                                                 labelSelector:
                                                   description: |-
                                                     A label query over a set of resources, in this case pods.
                                                     If it's null, this PodAffinityTerm matches with no Pods.
-                                                  type: object
                                                   properties:
                                                     matchExpressions:
                                                       description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
-                                                      type: array
                                                       items:
                                                         description: |-
                                                           A label selector requirement is a selector that contains values, a key, and an operator that
                                                           relates the key and values.
-                                                        type: object
-                                                        required:
-                                                        - key
-                                                        - operator
                                                         properties:
                                                           key:
                                                             description: key is the label key that the selector applies to.
@@ -2748,19 +2776,25 @@ spec:
                                                               the values array must be non-empty. If the operator is Exists or DoesNotExist,
                                                               the values array must be empty. This array is replaced during a strategic
                                                               merge patch.
-                                                            type: array
                                                             items:
                                                               type: string
+                                                            type: array
                                                             x-kubernetes-list-type: atomic
+                                                        required:
+                                                        - key
+                                                        - operator
+                                                        type: object
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     matchLabels:
+                                                      additionalProperties:
+                                                        type: string
                                                       description: |-
                                                         matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
                                                         map is equivalent to an element of matchExpressions, whose key field is "key", the
                                                         operator is "In", and the values array contains only "value". The requirements are ANDed.
                                                       type: object
-                                                      additionalProperties:
-                                                        type: string
+                                                  type: object
                                                   x-kubernetes-map-type: atomic
                                                 matchLabelKeys:
                                                   description: |-
@@ -2772,10 +2806,9 @@ spec:
                                                     pod labels will be ignored. The default value is empty.
                                                     The same key is forbidden to exist in both matchLabelKeys and labelSelector.
                                                     Also, matchLabelKeys cannot be set when labelSelector isn't set.
-                                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
-                                                  type: array
                                                   items:
                                                     type: string
+                                                  type: array
                                                   x-kubernetes-list-type: atomic
                                                 mismatchLabelKeys:
                                                   description: |-
@@ -2787,10 +2820,9 @@ spec:
                                                     pod labels will be ignored. The default value is empty.
                                                     The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.
                                                     Also, mismatchLabelKeys cannot be set when labelSelector isn't set.
-                                                    This is a beta field and requires enabling MatchLabelKeysInPodAffinity feature gate (enabled by default).
-                                                  type: array
                                                   items:
                                                     type: string
+                                                  type: array
                                                   x-kubernetes-list-type: atomic
                                                 namespaceSelector:
                                                   description: |-
@@ -2799,19 +2831,13 @@ spec:
                                                     and the ones listed in the namespaces field.
                                                     null selector and null or empty namespaces list means "this pod's namespace".
                                                     An empty selector ({}) matches all namespaces.
-                                                  type: object
                                                   properties:
                                                     matchExpressions:
                                                       description: matchExpressions is a list of label selector requirements. The requirements are ANDed.
-                                                      type: array
                                                       items:
                                                         description: |-
                                                           A label selector requirement is a selector that contains values, a key, and an operator that
                                                           relates the key and values.
-                                                        type: object
-                                                        required:
-                                                        - key
-                                                        - operator
                                                         properties:
                                                           key:
                                                             description: key is the label key that the selector applies to.
@@ -2827,19 +2853,25 @@ spec:
                                                               the values array must be non-empty. If the operator is Exists or DoesNotExist,
                                                               the values array must be empty. This array is replaced during a strategic
                                                               merge patch.
-                                                            type: array
                                                             items:
                                                               type: string
+                                                            type: array
                                                             x-kubernetes-list-type: atomic
+                                                        required:
+                                                        - key
+                                                        - operator
+                                                        type: object
+                                                      type: array
                                                       x-kubernetes-list-type: atomic
                                                     matchLabels:
+                                                      additionalProperties:
+                                                        type: string
                                                       description: |-
                                                         matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
                                                         map is equivalent to an element of matchExpressions, whose key field is "key", the
                                                         operator is "In", and the values array contains only "value". The requirements are ANDed.
                                                       type: object
-                                                      additionalProperties:
-                                                        type: string
+                                                  type: object
                                                   x-kubernetes-map-type: atomic
                                                 namespaces:
                                                   description: |-
@@ -2847,9 +2879,9 @@ spec:
                                                     The term is applied to the union of the namespaces listed in this field
                                                     and the ones selected by namespaceSelector.
                                                     null or empty namespaces list and null namespaceSelector means "this pod's namespace".
-                                                  type: array
                                                   items:
                                                     type: string
+                                                  type: array
                                                   x-kubernetes-list-type: atomic
                                                 topologyKey:
                                                   description: |-
@@ -2859,6 +2891,9 @@ spec:
                                                     selected pods is running.
                                                     Empty topologyKey is not allowed.
                                                   type: string
+                                              required:
+                                              - topologyKey
+                                              type: object
                                             type: array
                                             x-kubernetes-list-type: atomic
                                         type: object
@@ -2869,9 +2904,9 @@ spec:
                                       description: |-
                                         LocalObjectReference contains enough information to let you locate the
                                         referenced object inside the same namespace.
-                                      type: object
                                       properties:
                                         name:
+                                          default: ""
                                           description: |-
                                             Name of the referent.
                                             This field is effectively required, but due to backwards compatibility is
@@ -2879,9 +2914,12 @@ spec:
                                             almost certainly wrong.
                                             More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                                           type: string
-                                          default: ""
+                                      type: object
                                       x-kubernetes-map-type: atomic
                                     type: array
+                                    x-kubernetes-list-map-keys:
+                                    - name
+                                    x-kubernetes-list-type: map
                                   nodeSelector:
                                     additionalProperties:
                                       type: string
@@ -2893,6 +2931,40 @@ spec:
                                   priorityClassName:
                                     description: If specified, the pod's priorityClassName.
                                     type: string
+                                  resources:
+                                    description: |-
+                                      If specified, the pod's resource requirements.
+                                      These values override the global resource configuration flags.
+                                      Note that when only specifying resource limits, ensure they are greater than or equal
+                                      to the corresponding global resource requests configured via controller flags
+                                      (--acme-http01-solver-resource-request-cpu, --acme-http01-solver-resource-request-memory).
+                                      Kubernetes will reject pod creation if limits are lower than requests, causing challenge failures.
+                                    properties:
+                                      limits:
+                                        additionalProperties:
+                                          anyOf:
+                                          - type: integer
+                                          - type: string
+                                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                          x-kubernetes-int-or-string: true
+                                        description: |-
+                                          Limits describes the maximum amount of compute resources allowed.
+                                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                                        type: object
+                                      requests:
+                                        additionalProperties:
+                                          anyOf:
+                                          - type: integer
+                                          - type: string
+                                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                          x-kubernetes-int-or-string: true
+                                        description: |-
+                                          Requests describes the minimum amount of compute resources required.
+                                          If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                                          otherwise to the global values configured via controller flags. Requests cannot exceed Limits.
+                                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                                        type: object
+                                    type: object
                                   securityContext:
                                     description: If specified, the pod's security context
                                     properties:
@@ -3005,9 +3077,10 @@ spec:
                                           even if they are not included in this list.
                                           Note that this field cannot be set when spec.os.name is windows.
                                         items:
-                                          type: integer
                                           format: int64
+                                          type: integer
                                         type: array
+                                        x-kubernetes-list-type: atomic
                                       sysctls:
                                         description: |-
                                           Sysctls hold a list of namespaced sysctls used for the pod. Pods with unsupported
@@ -3015,10 +3088,6 @@ spec:
                                           Note that this field cannot be set when spec.os.name is windows.
                                         items:
                                           description: Sysctl defines a kernel parameter to be set
-                                          type: object
-                                          required:
-                                          - name
-                                          - value
                                           properties:
                                             name:
                                               description: Name of a property to set
@@ -3026,7 +3095,12 @@ spec:
                                             value:
                                               description: Value of a property to set
                                               type: string
+                                          required:
+                                          - name
+                                          - value
+                                          type: object
                                         type: array
+                                        x-kubernetes-list-type: atomic
                                     type: object
                                   serviceAccountName:
                                     description: If specified, the pod's service account
@@ -3037,7 +3111,6 @@ spec:
                                       description: |-
                                         The pod this Toleration is attached to tolerates any taint that matches
                                         the triple <key,value,effect> using the matching operator <operator>.
-                                      type: object
                                       properties:
                                         effect:
                                           description: |-
@@ -3062,14 +3135,16 @@ spec:
                                             of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default,
                                             it is not set, which means tolerate the taint forever (do not evict). Zero and
                                             negative values will be treated as 0 (evict immediately) by the system.
-                                          type: integer
                                           format: int64
+                                          type: integer
                                         value:
                                           description: |-
                                             Value is the taint value the toleration matches to.
                                             If the operator is Exists, the value should be empty, otherwise just a regular string.
                                           type: string
+                                      type: object
                                     type: array
+                                    x-kubernetes-list-type: atomic
                                 type: object
                             type: object
                           serviceType:
@@ -3099,6 +3174,7 @@ spec:
                         items:
                           type: string
                         type: array
+                        x-kubernetes-list-type: atomic
                       dnsZones:
                         description: |-
                           List of DNSZones that this solver will be used to solve.
@@ -3113,6 +3189,7 @@ spec:
                         items:
                           type: string
                         type: array
+                        x-kubernetes-list-type: atomic
                       matchLabels:
                         additionalProperties:
                           type: string
