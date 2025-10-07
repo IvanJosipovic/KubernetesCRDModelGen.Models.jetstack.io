@@ -8,9 +8,9 @@ metadata:
     app.kubernetes.io/name: cert-manager
     app.kubernetes.io/instance: release-name
     app.kubernetes.io/component: crds
-    app.kubernetes.io/version: v1.18.2
+    app.kubernetes.io/version: v1.19.0
     app.kubernetes.io/managed-by: Helm
-    helm.sh/chart: cert-manager-v1.18.2
+    helm.sh/chart: cert-manager-v1.19.0
   name: orders.acme.cert-manager.io
 spec:
   group: acme.cert-manager.io
@@ -78,6 +78,7 @@ spec:
                 items:
                   type: string
                 type: array
+                x-kubernetes-list-type: atomic
               duration:
                 description: |-
                   Duration is the duration for the not after date for the requested certificate.
@@ -91,6 +92,7 @@ spec:
                 items:
                   type: string
                 type: array
+                x-kubernetes-list-type: atomic
               issuerRef:
                 description: |-
                   IssuerRef references a properly configured ACME-type Issuer which should
@@ -100,13 +102,15 @@ spec:
                   Order will be marked as failed.
                 properties:
                   group:
-                    description: Group of the resource being referred to.
+                    default: cert-manager.io
+                    description: Group of the issuer being referred to.
                     type: string
                   kind:
-                    description: Kind of the resource being referred to.
+                    default: Issuer
+                    description: Kind of the issuer being referred to.
                     type: string
                   name:
-                    description: Name of the resource being referred to.
+                    description: Name of the issuer being referred to.
                     type: string
                 required:
                 - name
@@ -139,9 +143,6 @@ spec:
                     ACMEAuthorization contains data returned from the ACME server on an
                     authorization that must be completed in order validate a DNS name on an ACME
                     Order resource.
-                  type: object
-                  required:
-                  - url
                   properties:
                     challenges:
                       description: |-
@@ -149,17 +150,11 @@ spec:
                         One of these challenge types will be selected when validating the DNS
                         name and an appropriate Challenge resource will be created to perform
                         the ACME challenge process.
-                      type: array
                       items:
                         description: |-
                           Challenge specifies a challenge offered by the ACME server for an Order.
                           An appropriate Challenge resource can be created to perform the ACME
                           challenge process.
-                        type: object
-                        required:
-                        - token
-                        - type
-                        - url
                         properties:
                           token:
                             description: |-
@@ -179,6 +174,13 @@ spec:
                               URL is the URL of this challenge. It can be used to retrieve additional
                               metadata about the Challenge from the ACME server.
                             type: string
+                        required:
+                        - token
+                        - type
+                        - url
+                        type: object
+                      type: array
+                      x-kubernetes-list-type: atomic
                     identifier:
                       description: Identifier is the DNS name to be validated as part of this authorization
                       type: string
@@ -192,7 +194,6 @@ spec:
                         Encrypt's production endpoint).
                         If not set and 'identifier' is set, the state is assumed to be pending
                         and a Challenge will be created.
-                      type: string
                       enum:
                       - valid
                       - ready
@@ -201,6 +202,7 @@ spec:
                       - invalid
                       - expired
                       - errored
+                      type: string
                     url:
                       description: URL is the URL of the Authorization that must be completed
                       type: string
@@ -212,7 +214,11 @@ spec:
                         For example, if '*.example.com' is the DNS name being validated, this
                         field will be 'true' and the 'identifier' field will be 'example.com'.
                       type: boolean
+                  required:
+                  - url
+                  type: object
                 type: array
+                x-kubernetes-list-type: atomic
               certificate:
                 description: |-
                   Certificate is a copy of the PEM encoded certificate for this Order.
