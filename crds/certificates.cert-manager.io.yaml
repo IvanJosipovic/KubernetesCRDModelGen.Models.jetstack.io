@@ -15,9 +15,9 @@ metadata:
 spec:
   group: cert-manager.io
   names:
+    kind: Certificate
     categories:
     - cert-manager
-    kind: Certificate
     listKind: CertificateList
     plural: certificates
     shortNames:

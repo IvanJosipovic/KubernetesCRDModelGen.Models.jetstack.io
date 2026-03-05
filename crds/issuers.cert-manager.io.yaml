@@ -15,9 +15,9 @@ metadata:
 spec:
   group: cert-manager.io
   names:
+    kind: Issuer
     categories:
     - cert-manager
-    kind: Issuer
     listKind: IssuerList
     plural: issuers
     shortNames:

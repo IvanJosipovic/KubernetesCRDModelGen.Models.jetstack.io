@@ -15,10 +15,10 @@ metadata:
 spec:
   group: acme.cert-manager.io
   names:
+    kind: Challenge
     categories:
     - cert-manager
     - cert-manager-acme
-    kind: Challenge
     listKind: ChallengeList
     plural: challenges
     singular: challenge
