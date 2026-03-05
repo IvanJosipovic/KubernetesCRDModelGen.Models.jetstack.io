@@ -15,10 +15,10 @@ metadata:
 spec:
   group: acme.cert-manager.io
   names:
+    kind: Order
     categories:
     - cert-manager
     - cert-manager-acme
-    kind: Order
     listKind: OrderList
     plural: orders
     singular: order
