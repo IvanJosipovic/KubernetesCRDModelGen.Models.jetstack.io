@@ -20,7 +20,7 @@ namespace KubernetesCRDModelGen.Models.certmanager.io;
 /// A CertificateRequest is a one-shot resource, meaning it represents a single
 /// point in time request for a certificate and cannot be re-used.
 /// </summary>
-[global::System.CodeDom.Compiler.GeneratedCode("KubernetesCRDModelGen", "1.5.2+8c7b4a3647c1e77cd3e3152af5701ec2357dafe9")]
+[global::System.CodeDom.Compiler.GeneratedCode("KubernetesCRDModelGen", "1.5.3+0316f97acf12de380316633df08e7f13a064978d")]
 [global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
 [KubernetesEntity(Group = KubeGroup, Kind = KubeKind, ApiVersion = KubeApiVersion, PluralName = KubePluralName)]
 public partial class V1CertificateRequestList : IKubernetesObject<V1ListMeta>, IItems<V1CertificateRequest>
@@ -43,7 +43,7 @@ public partial class V1CertificateRequestList : IKubernetesObject<V1ListMeta>, I
 
     /// <summary>List of V1CertificateRequest objects.</summary>
     [JsonPropertyName("items")]
-    public IList<V1CertificateRequest>? Items { get; set; }
+    public required IList<V1CertificateRequest> Items { get; set; }
 }
 
 /// <summary>
@@ -54,7 +54,7 @@ public partial class V1CertificateRequestList : IKubernetesObject<V1ListMeta>, I
 /// 
 /// The `name` field of the reference must always be specified.
 /// </summary>
-[global::System.CodeDom.Compiler.GeneratedCode("KubernetesCRDModelGen", "1.5.2+8c7b4a3647c1e77cd3e3152af5701ec2357dafe9")]
+[global::System.CodeDom.Compiler.GeneratedCode("KubernetesCRDModelGen", "1.5.3+0316f97acf12de380316633df08e7f13a064978d")]
 [global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
 public partial class V1CertificateRequestSpecIssuerRef
 {
@@ -108,7 +108,7 @@ public partial class V1CertificateRequestSpecIssuerRef
 /// &quot;microsoft sgc&quot;,
 /// &quot;netscape sgc&quot;
 /// </summary>
-[global::System.CodeDom.Compiler.GeneratedCode("KubernetesCRDModelGen", "1.5.2+8c7b4a3647c1e77cd3e3152af5701ec2357dafe9")]
+[global::System.CodeDom.Compiler.GeneratedCode("KubernetesCRDModelGen", "1.5.3+0316f97acf12de380316633df08e7f13a064978d")]
 [JsonConverter(typeof(JsonStringEnumConverter<V1CertificateRequestSpecUsagesEnum>))]
 public enum V1CertificateRequestSpecUsagesEnum
 {
@@ -164,7 +164,7 @@ public enum V1CertificateRequestSpecUsagesEnum
 /// Specification of the desired state of the CertificateRequest resource.
 /// https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
 /// </summary>
-[global::System.CodeDom.Compiler.GeneratedCode("KubernetesCRDModelGen", "1.5.2+8c7b4a3647c1e77cd3e3152af5701ec2357dafe9")]
+[global::System.CodeDom.Compiler.GeneratedCode("KubernetesCRDModelGen", "1.5.3+0316f97acf12de380316633df08e7f13a064978d")]
 [global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
 public partial class V1CertificateRequestSpec
 {
@@ -257,7 +257,7 @@ public partial class V1CertificateRequestSpec
 }
 
 /// <summary>Status of the condition, one of (`True`, `False`, `Unknown`).</summary>
-[global::System.CodeDom.Compiler.GeneratedCode("KubernetesCRDModelGen", "1.5.2+8c7b4a3647c1e77cd3e3152af5701ec2357dafe9")]
+[global::System.CodeDom.Compiler.GeneratedCode("KubernetesCRDModelGen", "1.5.3+0316f97acf12de380316633df08e7f13a064978d")]
 [JsonConverter(typeof(JsonStringEnumConverter<V1CertificateRequestStatusConditionsStatusEnum>))]
 public enum V1CertificateRequestStatusConditionsStatusEnum
 {
@@ -270,7 +270,7 @@ public enum V1CertificateRequestStatusConditionsStatusEnum
 }
 
 /// <summary>CertificateRequestCondition contains condition information for a CertificateRequest.</summary>
-[global::System.CodeDom.Compiler.GeneratedCode("KubernetesCRDModelGen", "1.5.2+8c7b4a3647c1e77cd3e3152af5701ec2357dafe9")]
+[global::System.CodeDom.Compiler.GeneratedCode("KubernetesCRDModelGen", "1.5.3+0316f97acf12de380316633df08e7f13a064978d")]
 [global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
 public partial class V1CertificateRequestStatusConditions
 {
@@ -313,7 +313,7 @@ public partial class V1CertificateRequestStatusConditions
 /// Read-only.
 /// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
 /// </summary>
-[global::System.CodeDom.Compiler.GeneratedCode("KubernetesCRDModelGen", "1.5.2+8c7b4a3647c1e77cd3e3152af5701ec2357dafe9")]
+[global::System.CodeDom.Compiler.GeneratedCode("KubernetesCRDModelGen", "1.5.3+0316f97acf12de380316633df08e7f13a064978d")]
 [global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
 public partial class V1CertificateRequestStatus
 {
@@ -362,7 +362,7 @@ public partial class V1CertificateRequestStatus
 /// A CertificateRequest is a one-shot resource, meaning it represents a single
 /// point in time request for a certificate and cannot be re-used.
 /// </summary>
-[global::System.CodeDom.Compiler.GeneratedCode("KubernetesCRDModelGen", "1.5.2+8c7b4a3647c1e77cd3e3152af5701ec2357dafe9")]
+[global::System.CodeDom.Compiler.GeneratedCode("KubernetesCRDModelGen", "1.5.3+0316f97acf12de380316633df08e7f13a064978d")]
 [global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
 [KubernetesEntity(Group = KubeGroup, Kind = KubeKind, ApiVersion = KubeApiVersion, PluralName = KubePluralName)]
 public partial class V1CertificateRequest : IKubernetesObject<V1ObjectMeta>, ISpec<V1CertificateRequestSpec?>, IStatus<V1CertificateRequestStatus?>
